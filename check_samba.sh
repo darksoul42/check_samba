@@ -6,6 +6,7 @@ SCRIPT=`basename $0`
 usage()
 {
 	echo "Usage: $0 -H|--hostname <HOSTNAME> -P|--principal <PRINCIPAL> -R|--realm <REALM> [-S|--share <SHARE>]
+	[-p|--password <PASSWORD] [-s|--stdin-password] [-C|--config <KERBEROS_CONFIG_FILE>]
 	[-T|--keytab <KEYTAB>] [-w|--warning <WARNING_TIME>] [-c|--critical <CRITICAL_TIME>] [-t|--timeout <TIMEOUT>]
 	[-L|--label <LABEL>] [-d|--debug] [-v|--verbose] [-h|--help]"
 	exit 1
@@ -13,10 +14,12 @@ usage()
 
 alarm() { perl -e 'alarm shift; exec @ARGV' "$@"; }
 
+missing() { echo "Missing required command $1!"; exit 3; }
+
 ###############################################################################
 # Parse arguments
 
-GETOPT_TEMP=`getopt -o H:P:R:S:T:L:w:c:t:dvh --long hostname:,principal:,realm:,share:,keytab:,label:,warning:,critical:,timeout:,debug,verbose,help -n "$SCRIPT" -- "$@"`
+GETOPT_TEMP=`getopt -o H:P:p:sC:R:S:T:L:w:c:t:dvh --long hostname:,principal:,password:,stdin-password,config:,realm:,share:,keytab:,label:,warning:,critical:,timeout:,debug,verbose,help -n "$SCRIPT" -- "$@"`
 eval set -- "$GETOPT_TEMP"
 
 DEBUG=0
@@ -25,6 +28,8 @@ DEFAULT_TIMEOUT=20
 DEFAULT_LABEL="SMB LOGON"
 WARNING_TIME=5
 CRITICAL_TIME=10
+STDIN_PASS=0;
+USE_PASS=1;
 
 while true ; do
   case "$1" in
@@ -33,9 +38,12 @@ while true ; do
 			*@*) echo "Invalid principal '$2': please only type the user portion (before the @)"; exit 1 ;;
 			*) PRINCIPAL=$2; ;;
 			esac;			shift 2 ;;
+  -p|--password)	PASS=$2;		shift 2 ;;
+  -s|--stdin-password)	STDIN_PASS=1;		shift ;;
+  -C|--config)		CONFIG=$2;		shift 2 ;;
   -R|--realm)		REALM=$2;		shift 2 ;;
   -S|--share)		SHARE=$2;		shift 2 ;;
-  -T|--keytab)		KEYTAB=$2;		shift 2 ;;
+  -T|--keytab)		KEYTAB=$2; USE_PASS=0;	shift 2 ;;
   -L|--label)		LABEL=$2;		shift 2 ;;
   -w|--warning)		WARNING_TIME=$2;	shift 2 ;;
   -c|--critical)	CRITICAL_TIME=$2;	shift 2 ;;
@@ -66,6 +74,24 @@ if [ -n "$WARNING_TIME" -a -n "$CRITICAL_TIME" ] ; then
 	fi
 fi
 
+if [ "$STDIN_PASS" -gt 0 ] ; then
+	read PASS
+fi
+if [ -z "$PASS" -a "$USE_PASS" -gt 0 ] ; then
+	echo -n "ERROR: Password required, but not specified."
+	if [ "$STDIN_PASS" -gt 0 ] ; then
+		echo -n " You did not pass the password via standard input."
+	fi
+	echo
+	exit 3
+fi
+
+###############################################################################
+# Execution environment sanity check
+for command in kinit smbclient ; do
+	which $command >/dev/null || missing $command
+done
+
 ###############################################################################
 # Execute command
 tmp_stderr=`mktemp`
@@ -76,8 +102,21 @@ start_time=`date +%s`
 # First ensure we use another credential cache store for this script and this hostname
 export KRB5CCNAME="/tmp/krb5cc.user`id -u`.`basename ${0}`.$HOSTNAME"
 
+# Then, if we have a custom Kerberos configuration file, ensure we use it
+if [ -n "$CONFIG" ] ; then
+	export KRB5_CONFIG="$CONFIG"
+fi
+
+# Apply requested authentication mode
 if [ -n "$KEYTAB" ] ; then
 	kinit_output=`kinit -t "${KEYTAB}" -k -V "${PRINCIPAL}@${REALM}" 2>&1`
+	kinit_code="$?"
+	if [ "$kinit_code" -ne 0 ] ; then
+		ERROR_REASON="kinit failed : ${kinit_output}"
+		retcode=2; kinit_fail=1
+	fi
+elif [ -n "$PASS" ] ; then
+	kinit_output=`echo "$PASS" | kinit -V "${PRINCIPAL}@${REALM}" 2>&1`
 	kinit_code="$?"
 	if [ "$kinit_code" -ne 0 ] ; then
 		ERROR_REASON="kinit failed : ${kinit_output}"

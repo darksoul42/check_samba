@@ -19,7 +19,7 @@ missing() { echo "Missing required command $1!"; exit 3; }
 ###############################################################################
 # Parse arguments
 
-GETOPT_TEMP=`getopt -o H:P:p:sC:R:S:T:L:w:c:t:dvh --long hostname:,principal:,password:,stdin-password,config:,realm:,share:,keytab:,label:,warning:,critical:,timeout:,debug,verbose,help -n "$SCRIPT" -- "$@"`
+GETOPT_TEMP=`getopt -o H:P:p:sC:R:S:T:L:w:c:t:dvih --long hostname:,principal:,password:,stdin-password,config:,realm:,share:,keytab:,label:,warning:,critical:,timeout:,debug,verbose,ignore-stdout,help -n "$SCRIPT" -- "$@"`
 eval set -- "$GETOPT_TEMP"
 
 DEBUG=0
@@ -28,8 +28,9 @@ DEFAULT_TIMEOUT=20
 DEFAULT_LABEL="SMB LOGON"
 WARNING_TIME=5
 CRITICAL_TIME=10
-STDIN_PASS=0;
-USE_PASS=1;
+STDIN_PASS=0
+USE_PASS=1
+IGNORE_OUTPUT=0
 
 while true ; do
   case "$1" in
@@ -50,6 +51,7 @@ while true ; do
   -t|--timeout)		TIMEOUT=$2;		shift 2 ;;
   -d|--debug)		DEBUG=1; VERBOSE=1; 	shift ;;
   -v|--verbose)		VERBOSE=1;		shift ;;
+  -i|--ignore-stdout)	IGNORE_OUTPUT=1;	shift ;;
   -h|--help)		usage ;;
   --) shift ; break ;;
   *) echo "Internal error!"; exit 1 ;;
@@ -155,7 +157,11 @@ fi
 
 ###############################################################################
 # Calculate response
-RESPONSE=`cat "${tmp_stderr}" | head -1`
+if [ "$IGNORE_STDOUT" -eq 0 ] ; then
+	RESPONSE=`cat "${tmp_stderr}" | head -1`
+else
+	RESPONSE="SMB Session Established to $HOSTNAME"
+fi
 case $kinit_code in
 142) ERROR_REASON="${ERROR_REASON}, execution timeout while running kinit" ;;
 esac

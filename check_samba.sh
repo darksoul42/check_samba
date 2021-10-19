@@ -157,7 +157,7 @@ fi
 
 ###############################################################################
 # Calculate response
-if [ "$IGNORE_STDOUT" -eq 0 ] ; then
+if [ "$IGNORE_OUTPUT" -eq 0 ] ; then
 	RESPONSE=`cat "${tmp_stderr}" | head -1`
 else
 	RESPONSE="SMB Session Established to $HOSTNAME"

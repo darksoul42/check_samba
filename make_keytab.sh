@@ -14,7 +14,7 @@ if [ -z "$KRB_USERNAME" ] ; then usage ; fi
 shift
 KRB_REALMS=$@
 read KRB_PASSWORD
-KRB_CIPHER=aes256-cts-hmac-sha1-96
+if [ -z "$KRB_CIPHER" ] ; then KRB_CIPHER=aes256-cts-hmac-sha1-96 ; fi
 
 if [ -z "$KRB_PASSWORD" -o -z "$KRB_REALMS" ] ; then usage ; fi
 

@@ -19,5 +19,5 @@ if [ -z "$KRB_CIPHER" ] ; then KRB_CIPHER=aes256-cts-hmac-sha1-96 ; fi
 if [ -z "$KRB_PASSWORD" -o -z "$KRB_REALMS" ] ; then usage ; fi
 
 for realm in $KRB_REALMS ; do
-	echo "addent -password -p $KRB_USERNAME@$realm -k 1 -e $KRB_CIPHER\n$KRB_PASSWORD\nwrite_kt $KRB_USERNAME.keytab" | ktutil
+	printf "%b" "addent -password -p $KRB_USERNAME@$realm -k 1 -e $KRB_CIPHER\n$KRB_PASSWORD\nwrite_kt $KRB_USERNAME.keytab" | ktutil
 done

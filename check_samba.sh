@@ -141,7 +141,17 @@ if [ "$kinit_fail" -eq 0 ] ; then
 		if [ -z "$ERROR_REASON" ] ; then
 			ERROR_REASON="Empty output while connecting to $HOSTNAME"
 		fi
+		case $smbclient_code in
+		142) ERROR_REASON="${ERROR_REASON}, execution timeout while running smbclient" ;;
+		esac
 	fi
+else
+	if [ -z "$ERROR_REASON" ] ; then
+		ERROR_REASON="Empty output while running kinit to contact realm '$REALM'"
+	fi
+	case $kinit_code in
+	142) ERROR_REASON="Execution timeout while running kinit to contact realm '$REALM'" ;;
+	esac
 fi
 end_time=`date +%s`
 delay=$((end_time-start_time))
@@ -170,12 +180,6 @@ if [ "$IGNORE_OUTPUT" -eq 0 ] ; then
 else
 	RESPONSE="SMB Session Established to $HOSTNAME"
 fi
-case $kinit_code in
-142) ERROR_REASON="${ERROR_REASON}, execution timeout while running kinit" ;;
-esac
-case $smbclient_code in
-142) ERROR_REASON="${ERROR_REASON}, execution timeout while running smbclient" ;;
-esac
 
 ###############################################################################
 # Verbose mode

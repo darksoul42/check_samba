@@ -111,7 +111,7 @@ fi
 
 # Apply requested authentication mode
 if [ -n "$KEYTAB" ] ; then
-	kinit_output=`alarm kinit -t "${KEYTAB}" -k -V "${PRINCIPAL}@${REALM}" 2>&1`
+	kinit_output=`alarm $TIMEOUT kinit -t "${KEYTAB}" -k -V "${PRINCIPAL}@${REALM}" 2>&1`
 	kinit_last=`echo "$kinit_output" | tail -1`
 	kinit_code="$?"
 	if [ "$kinit_code" -ne 0 ] ; then

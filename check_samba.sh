@@ -111,17 +111,18 @@ fi
 
 # Apply requested authentication mode
 if [ -n "$KEYTAB" ] ; then
-	kinit_output=`kinit -t "${KEYTAB}" -k -V "${PRINCIPAL}@${REALM}" 2>&1`
+	kinit_output=`alarm kinit -t "${KEYTAB}" -k -V "${PRINCIPAL}@${REALM}" 2>&1`
+	kinit_last=`echo "$kinit_output" | tail -1`
 	kinit_code="$?"
 	if [ "$kinit_code" -ne 0 ] ; then
-		ERROR_REASON="kinit failed : ${kinit_output}"
+		ERROR_REASON="kinit failed : ${kinit_last}"
 		retcode=2; kinit_fail=1
 	fi
 elif [ -n "$PASS" ] ; then
 	kinit_output=`echo "$PASS" | kinit -V "${PRINCIPAL}@${REALM}" 2>&1`
 	kinit_code="$?"
 	if [ "$kinit_code" -ne 0 ] ; then
-		ERROR_REASON="kinit failed : ${kinit_output}"
+		ERROR_REASON="kinit failed : ${kinit_last}"
 		retcode=2; kinit_fail=1
 	fi
 fi

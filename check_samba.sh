@@ -180,6 +180,7 @@ if [ "$IGNORE_OUTPUT" -eq 0 ] ; then
 else
 	RESPONSE="SMB Session Established to $HOSTNAME"
 fi
+RESPONSE="${RESPONSE}${ERROR_REASON}"
 
 ###############################################################################
 # Verbose mode
@@ -208,10 +209,12 @@ rm "${tmp_stdout}"
 ###############################################################################
 # Display result and return exit code
 case $retcode in
-0) echo "$LABEL OK: $RESPONSE" ;;
-1) echo "$LABEL WARNING: $ERROR_REASON" ;;
-2) echo "$LABEL CRITICAL: $ERROR_REASON" ;;
-3) echo "$LABEL UNKNOWN: $ERROR_REASON" ;;
+0) RETWORD="OK" ;;
+1) RETWORD="WARNING" ;;
+2) RETWORD="CRITICAL" ;;
+3) RETWORD="UNKNOWN" ;;
 esac
+
+echo "$LABEL $RETWORD: $RESPONSE"
 
 exit $retcode

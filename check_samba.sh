@@ -134,7 +134,13 @@ if [ "$kinit_fail" -eq 0 ] ; then
 		alarm $TIMEOUT smbclient -k "//$HOSTNAME/$SHARE" -c ls 2>"${tmp_stderr}" >"${tmp_stdout}"
 		smbclient_code="$?"
 	fi
-	if [ "$smbclient_code" -ne 0 ] ; then retcode=2; ERROR_REASON=`cat "${tmp_stdout}"`; fi
+	if [ "$smbclient_code" -ne 0 ] ; then
+		retcode=2
+		ERROR_REASON=`cat "${tmp_stdout}"`
+		if [ -z "$ERROR_REASON" ] ; then
+			ERROR_REASON="Empty output while connecting to $HOSTNAME"
+		fi
+	fi
 fi
 end_time=`date +%s`
 delay=$((end_time-start_time))

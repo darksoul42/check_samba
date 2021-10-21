@@ -190,7 +190,7 @@ fi) >&2
 
 ###############################################################################
 # Clean up temp files
-if [ -n "$KEYTAB" -a "$kinit_fail" -eq 0 ] ; then kdestroy; fi
+if [ -n "$KEYTAB" -a "$kinit_fail" -eq 0 ] ; then kdestroy >/dev/null 2>&1; fi
 rm "${tmp_stderr}"
 rm "${tmp_stdout}"
 

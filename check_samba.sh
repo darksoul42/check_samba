@@ -178,7 +178,15 @@ fi
 if [ "$IGNORE_OUTPUT" -eq 0 ] ; then
 	RESPONSE=`cat "${tmp_stderr}" | head -1`
 else
-	RESPONSE="SMB Session Established to $HOSTNAME"
+	if [ "$kinit_fail" -eq 0 ] ; then
+		if [ "$smbclient_code" -eq 0 ] ; then
+			RESPONSE="SMB Session Established to $HOSTNAME"
+		else
+			RESPONSE="SMB Session problem: "
+		fi
+	else
+		RESPONSE="Kerberos problem: "
+	fi
 fi
 RESPONSE="${RESPONSE}${ERROR_REASON}"
 

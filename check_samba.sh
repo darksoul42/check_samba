@@ -159,16 +159,15 @@ delay=$((end_time-start_time))
 ###############################################################################
 # Based on execution delay, determine if we have a warning or a critical
 if [ -n "$WARNING_TIME" -o -n "$CRITICAL_TIME" ] ; then
-	if [ "$delay" -ge "$WARNING_TIME" ] ; then
-		if [ $retcode -lt 1 ] ; then
-			ERROR_REASON="${ERROR_REASON}, execution took $delay seconds"
-			retcode=1;
-		fi;
-	fi
 	if [ "$delay" -ge "$CRITICAL_TIME" ] ; then
 		if [ $retcode -lt 2 ] ; then
 			ERROR_REASON="${ERROR_REASON}, execution took $delay seconds"
 			retcode=2;
+		fi;
+	elif [ "$delay" -ge "$WARNING_TIME" ] ; then
+		if [ $retcode -lt 1 ] ; then
+			ERROR_REASON="${ERROR_REASON}, execution took $delay seconds"
+			retcode=1;
 		fi;
 	fi
 fi
